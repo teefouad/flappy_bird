@@ -63,7 +63,7 @@ function createClass($constructor, $class, $parent) {
 }
 
 /**
- * Animated properties of an object
+ * Animates properties of an object
  * @param {Object} obj Object to animate its properties
  * @param {Object} props An object that represents the properties to be animated
  * @param {Object} settings Animation settings
@@ -91,7 +91,20 @@ function animate(obj, props, settings) {
       easeInOutCubic: function (x, t, b, c, d) {
         if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
         return c / 2 * ((t -= 2) * t * t + 2) + b;
-      }
+      },
+      easeOutElastic: function (x, t, b, c, d) {
+        var s = 1.70158;
+        var p = 0;
+        var a = c;
+        if (t == 0) return b;
+        if ((t /= d) == 1) return b + c;
+        if (!p) p = d * .3;
+        if (a < Math.abs(c)) {
+          a = c;
+          var s = p / 4;
+        } else var s = p / (2 * Math.PI) * Math.asin(c / a);
+        return a * Math.pow(2, - 10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b;
+      },
     },
     (window.animationEasing || {})
   );
@@ -255,6 +268,13 @@ function getRGB(hex) {
   };
 }
 
+/**
+ * Detects whether the device is touch enabled
+ */
+function isTouch() {
+  return !!('ontouchstart' in window);
+}
+
 /* ============================================ */
 /* RENDER
 /* ============================================ */
@@ -353,8 +373,10 @@ var renderer = new Renderer(canvas);
 // resize canvas
 
 window.addEventListener('resize', (function resizeCanvas() {
-  canvas.width = 2 * canvas.offsetWidth;
-  canvas.height = 2 * canvas.offsetHeight;
+  var scaleFactor = 1 + (0.8 * 1100 / window.innerHeight);
+
+  canvas.width = scaleFactor * canvas.offsetWidth;
+  canvas.height = scaleFactor * canvas.offsetHeight;
 
   // throttle
   var timeout;
@@ -654,6 +676,7 @@ var Bird = createClass(
         spriteRect: { x: 100, y: 50, width: 40, height: 70 },
         width: 40,
         height: 70,
+        zindex: 1,
       }),
 
       tail_outer: new CanvasObject(this.renderer, {
@@ -663,6 +686,7 @@ var Bird = createClass(
         height: 47,
         originX: 1,
         originY: 0,
+        zindex: 1,
       }),
 
       tail_inner: new CanvasObject(this.renderer, {
@@ -672,6 +696,7 @@ var Bird = createClass(
         height: 47,
         originX: 1,
         originY: 0,
+        zindex: 1,
       }),
 
       feet_inner: new CanvasObject(this.renderer, {
@@ -681,6 +706,7 @@ var Bird = createClass(
         height: 20,
         originX: 0.5,
         originY: 0,
+        zindex: 1,
       }),
 
       body: new CanvasObject(this.renderer, {
@@ -690,6 +716,7 @@ var Bird = createClass(
         height: 120,
         originX: 0.5,
         originY: 0.5,
+        zindex: 1,
       }),
 
       feet_outer: new CanvasObject(this.renderer, {
@@ -699,6 +726,7 @@ var Bird = createClass(
         height: 20,
         originX: 0.5,
         originY: 0,
+        zindex: 1,
       }),
 
       eye: new CanvasObject(this.renderer, {
@@ -708,6 +736,7 @@ var Bird = createClass(
         height: 50,
         originX: 0.5,
         originY: 0.5,
+        zindex: 1,
       }),
 
       pupil: new CanvasObject(this.renderer, {
@@ -717,6 +746,7 @@ var Bird = createClass(
         height: 10,
         originX: 0.5,
         originY: 0.5,
+        zindex: 1,
       }),
 
       wing: new Animatable(this.renderer, {
@@ -728,6 +758,7 @@ var Bird = createClass(
         originY: 1,
         totalFrames: 2,
         paused: true,
+        zindex: 1,
       }),
     };
   },
@@ -905,6 +936,232 @@ var ShockedBird = createClass(
   Animatable
 );
 
+var DeadBird = createClass(
+  function (renderer, options) {
+    this.anatomy = {
+      ring_top: new CanvasObject(this.renderer, {
+        sprite: 'bird-ghost.png',
+        spriteRect: { x: 110, y: 90, width: 75, height: 10 },
+        width: 75,
+        height: 10,
+        originX: 0.5,
+        originY: 1,
+        x: this.x,
+        y: this.y,
+        zindex: 4,
+      }),
+
+      ring_bottom: new CanvasObject(this.renderer, {
+        sprite: 'bird-ghost.png',
+        spriteRect: { x: 110, y: 100, width: 75, height: 11 },
+        width: 75,
+        height: 11,
+        originX: 0.5,
+        originY: 0,
+        x: this.x,
+        y: this.y,
+        zindex: 6,
+      }),
+
+      body: new CanvasObject(this.renderer, {
+        sprite: 'bird-ghost.png',
+        spriteRect: { x: 0, y: 0, width: 100, height: 120 },
+        width: 100,
+        height: 120,
+        originX: 0.5,
+        originY: 0.5,
+        scaleX: 0,
+        scaleY: 0,
+        zindex: 5,
+      }),
+      
+      wing_right: new CanvasObject(this.renderer, {
+        sprite: 'bird-ghost.png',
+        spriteRect: { x: 110, y: 0, width: 100, height: 72 },
+        width: 100,
+        height: 72,
+        originX: 1,
+        originY: 1,
+        zindex: -1,
+        scaleX: -1.25,
+        scaleY: 1.25,
+        opacity: 0.95,
+        zindex: 4,
+      }),
+      
+      wing_left: new CanvasObject(this.renderer, {
+        sprite: 'bird-ghost.png',
+        spriteRect: { x: 110, y: 0, width: 100, height: 72 },
+        width: 100,
+        height: 72,
+        originX: 1,
+        originY: 1,
+        zindex: -1,
+        scaleX: 1.25,
+        scaleY: 1.25,
+        opacity: 0.95,
+        zindex: 4,
+      }),
+    };
+
+    this.timeout = setTimeout(function flap() {
+      this.vy = -8;
+      this.timeout = setTimeout(flap.bind(this), 1500);
+    }.bind(this), 700);
+
+    this.anatomy.body.animate({
+      scaleX: {
+        to: 1,
+        duration: 600,
+        easing: 'easeOutElastic',
+      },
+      scaleY: {
+        to: 1,
+        duration: 400,
+        easing: 'easeOutElastic',
+      }
+    });
+
+    this.anatomy.wing_right.animate({
+      scaleX: {
+        from: 0,
+        to: this.anatomy.wing_right.options.scaleX,
+        easing: 'easeInOutCubic',
+        duration: 600,
+        delay: 300
+      },
+      scaleY: {
+        from: 0,
+        to: this.anatomy.wing_right.options.scaleY,
+        easing: 'easeInOutCubic',
+        duration: 600,
+        delay: 300
+      }
+    });
+    
+    this.anatomy.wing_left.animate({
+      scaleX: {
+        from: 0,
+        to: this.anatomy.wing_left.options.scaleX,
+        easing: 'easeInOutCubic',
+        duration: 600,
+        delay: 300
+      },
+      scaleY: {
+        from: 0,
+        to: this.anatomy.wing_left.options.scaleY,
+        easing: 'easeInOutCubic',
+        duration: 600,
+        delay: 300
+      }
+    });
+  },
+  {
+    defaults: Object.assign({}, cloneObject(CanvasObject.prototype.defaults), {
+      anatomy: {},
+      width: 200,
+      height: 200,
+      originX: 0.5,
+      originY: 0.5,
+      vy: -1,
+      oy: 0,
+    }),
+
+    update: function () {
+      this.oy = this.y;
+
+      this.y += this.vy;
+      this.vy += 0.1;
+
+      this.anatomy.body.scaleY += (1 - 0.035 * (this.y - this.oy) - this.anatomy.body.scaleY) / 5;
+      this.anatomy.body.scaleX += (1 + (1 - this.anatomy.body.scaleY) - this.anatomy.body.scaleX) / 5;
+
+      this.anatomy.ring_top.x = this.x;
+      this.anatomy.ring_top.y += (this.y - 90 - 0.25 * (this.y - this.oy) - this.anatomy.ring_top.y) / 5;
+
+      this.anatomy.ring_bottom.x = this.x;
+      this.anatomy.ring_bottom.y = this.anatomy.ring_top.y;
+
+      this.anatomy.body.x = this.x;
+      this.anatomy.body.y = this.y;
+
+      this.anatomy.wing_right.x = this.x - 10;
+      this.anatomy.wing_right.y = this.y - 20;
+      this.anatomy.wing_right.rotation += (Math.max(-30, -17 * (this.y - this.oy)) - this.anatomy.wing_right.rotation) / 5;
+
+      this.anatomy.wing_left.x = this.x + 10;
+      this.anatomy.wing_left.y = this.y - 20;
+      this.anatomy.wing_left.rotation += (Math.min(30, 17 * (this.y - this.oy)) - this.anatomy.wing_left.rotation) / 5;
+
+      if (this.y < -this.height) {
+        this.destroy();
+      }
+      
+      CanvasObject.prototype.update.call(this);
+    },
+
+    destroy: function() {
+      CanvasObject.prototype.destroy.call(this);
+
+      Object.keys(this.anatomy).forEach(function (part) {
+        this.anatomy[part].destroy();
+      }.bind(this));
+
+      clearTimeout(this.timeout);
+    }
+  },
+  CanvasObject
+);
+
+var DeadFeather = createClass(
+  function (renderer, options) {
+    this.dvx = rand(0.1, 0.3);
+    this.dvy = rand(0.09, 0.18);
+    this.maxVY = rand(1.5, 2.5);
+    this.rotation = rand(360);
+    this.dr = rand(180, 360);
+    this.ddr = rand(0.9, 0.98);
+    this.t = rand(360);
+    this.wt = 0.04;
+    this.amplitude = rand(10, 20);
+
+    this.spriteRect.y = rand(1) > 0.5 ? 0 : 47;
+  },
+  {
+    defaults: Object.assign({}, cloneObject(CanvasObject.prototype.defaults), {
+      sprite: 'bird-sprite.png',
+      spriteRect: { x: 160, y: 0, width: 40, height: 47 },
+      width: 40,
+      height: 47,
+      originX: 0.5,
+      originY: 0.5,
+      zindex: 1,
+      vx: 0,
+      vy: 0,
+    }),
+
+    update: function () {
+      this.t += this.wt;
+
+      this.x += this.vx + 0.3 * this.amplitude * Math.sin(this.t);
+      this.y += this.vy;
+
+      this.vx *= this.dvx;
+      this.vy = Math.min(this.maxVY, this.vy + this.dvy);
+
+      this.rotation = this.amplitude * Math.cos(this.t) - 135 + this.dr;
+      this.dr *= this.ddr;
+
+      if (this.y > this.canvas.height + this.height) {
+        this.destroy();
+      }
+      
+      CanvasObject.prototype.update.call(this);
+    }
+  },
+  CanvasObject
+);
+
 /* ============================================ */
 /* POOF
 /* ============================================ */
@@ -961,6 +1218,7 @@ var Poof = createClass(
         amplitude: 0,
         t: rand(2),
         dt: rand(-0.02, 0.02),
+        zindex: this.zindex
       }));
     }
   },
@@ -1076,6 +1334,9 @@ var Wires = createClass(
     if (this.placement === 'top') {
       this.spriteRect.y = this.spriteRect.height;
     }
+
+    this.tx = 0;
+    this.ty = 0;
   },
   {
     defaults: Object.assign({}, cloneObject(CanvasObject.prototype.defaults), {
@@ -1093,10 +1354,16 @@ var Wires = createClass(
       this.spriteRect.x = 1120 + this.shape * (4 * this.spriteRect.width);
 
       if (this.zap) {
-        this.scaleX = 1 + rand(-0.005, 0.005);
-        this.scaleY = 1 + rand(-0.0015, 0.0015);
+        this.tx += (rand(-0.03, 0.03) - this.tx) / 3;
+        this.ty += (rand(-0.0015, 0.0025) - this.ty) / 3;
         this.spriteRect.x = 1120 + this.shape * (4 * this.spriteRect.width) + irand(1, 3) * this.spriteRect.width;
+      } else {
+        this.tx += (0 - this.tx) / 21;
+        this.ty += (0 - this.ty) / 21;
       }
+
+      this.scaleX = 1 + this.tx;
+      this.scaleY = 1 + this.ty;
 
       CanvasObject.prototype.update.call(this);
     },
@@ -1125,7 +1392,7 @@ var Game = createClass(
 
     window.addEventListener('keydown', this.__keyDownEventListener);
     window.addEventListener('keyup', this.__keyUpEventListener);
-    window.addEventListener('mousedown', this.__mouseDownEventListener);
+    window.addEventListener(isTouch() ? 'touchstart' : 'mousedown', this.__mouseDownEventListener);
 
     this.reset();
   },
@@ -1136,7 +1403,9 @@ var Game = createClass(
     _score: 0,
     _bestScore: 0,
 
-    speed: 7,
+    speed: 6,
+    minSpeed: 6,
+    maxSpeed: 7.2,
 
     pipes: {},
     pipeID: 0,
@@ -1196,7 +1465,7 @@ var Game = createClass(
       this.ended = false;
 
       // reset speed
-      this.speed = 7;
+      this.speed = this.minSpeed;
 
       // reset score
       this.score = 0;
@@ -1226,6 +1495,16 @@ var Game = createClass(
       // reset bird reference
       if (this.bird) {
         this.bird.destroy();
+      }
+      
+      if (this.birdGhost) {
+        this.birdGhost.destroy();
+      }
+
+      if (this.deadFeathers) {
+        this.deadFeathers.forEach(function(deadFeather) {
+          deadFeather.destroy();
+        });
       }
       
       this.bird = new Bird(this.renderer, {
@@ -1288,7 +1567,7 @@ var Game = createClass(
       
       // keep flying until the game starts
       if (!this.started && !this.ended) {
-        if (this.bird.y > 0.5 * this.canvas.height) {
+        if (this.bird.y > 0.55 * this.canvas.height) {
           this.bird.flap(16);
         }
       }
@@ -1402,6 +1681,9 @@ var Game = createClass(
               this.bestScore = this.score;
               localStorage.setItem('fb_score', this.bestScore);
             }
+            
+            // increment speed
+            this.speed = Math.min(this.maxSpeed, this.speed + 0.1);
           }
         }
 
@@ -1425,10 +1707,30 @@ var Game = createClass(
             new Poof(this.renderer, {
               x: this.birdGhost.x,
               y: this.birdGhost.y,
+              zindex: 10,
             });
+
+            this.deadFeathers = [];
+
+            for (var i = 0; i < 8; i++) {
+              this.deadFeathers.push(new DeadFeather(this.renderer, {
+                x: this.birdGhost.x,
+                y: this.birdGhost.y,
+                vx: rand(15, 20) * Math.cos(35 * (i + 1) * Math.PI / 180),
+                vy: rand(8, 10) * Math.sin(35 * (i + 1) * Math.PI / 180),
+                zindex: rand(1) > 0.5 ? 10 : 0,
+              }));
+            }
             
             this.birdGhost.destroy();
-          }.bind(this), 1000)
+
+            this.birdGhost = new DeadBird(this.renderer, {
+              x: this.bird.x + 15,
+              y: this.bird.y + 10,
+            });
+          }.bind(this), 1000);
+
+          navigator.vibrate(1000);
         }
       }.bind(this));
     },
@@ -1488,7 +1790,7 @@ var Game = createClass(
 
     createPipes: function() {
       if (!this.paused && !this.ended) {
-        var gap = rand(360, 400);
+        var gap = 440 + 50 * (this.maxSpeed - this.speed) - 50 * (this.speed - this.minSpeed);
         var position = rand(0.25, 0.75) * this.canvas.height;
         
         // create top pipe
@@ -1552,7 +1854,7 @@ var Game = createClass(
 
       window.removeEventListener('keydown', this.__keyDownEventListener);
       window.removeEventListener('keyup', this.__keyUpEventListener);
-      window.removeEventListener('mousedown', this.__mouseDownEventListener);
+      window.removeEventListener(isTouch() ? 'touchstart' : 'mousedown', this.__mouseDownEventListener);
     },
     
     mousedown: function(e) {
@@ -1607,8 +1909,54 @@ var Game = createClass(
 /* INITIALIZE
 /* ============================================ */
 
-var game = new Game(renderer);
+if (isTouch()) {
+  document.body.classList.add('is-touch');
+}
 
-window.addEventListener('blur', function() {
-  // game.pause();
-});
+function preloadImages(images, onComplete, onProgress) {
+  var loaded = 0;
+
+  preloadImage(images[loaded]);
+  
+  function preloadImage(src) {
+    if (images.length === loaded) {
+      return onComplete && onComplete();
+    }
+
+    var img = new Image();
+
+    img.onload = function () {
+      loaded++;
+      onProgress && onProgress(loaded / images.length);
+      preloadImage(images[loaded]);
+    }
+
+    img.src = src;
+    
+    img.style.visibility = 'hidden';
+    img.style.width = '1px';
+    img.style.height = '1px';
+    img.style.position = 'fixed';
+
+    document.body.appendChild(img);
+  }
+}
+
+preloadImages([
+  'bird-sprite.png',
+  'bird-shocked.png',
+  'bird-ghost.png',
+  'pipe.png',
+  'sky.png',
+  'clouds.png'
+], function() {
+  document.body.classList.add('is-loaded');
+
+  var game = new Game(renderer);
+
+  window.addEventListener('blur', function () {
+    game.pause();
+  });
+}, function(v) {
+  preloader.innerHTML = Math.ceil(v * 100) + '%';
+})
