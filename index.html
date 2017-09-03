@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
-	<title>Canvas Experiment | Mostafa Fouad</title>
+	<title>Flappy Bird | Mostafa Fouad</title>
 
   <!-- OPEN GRAPH-->
-  <meta property="og:title" content="Canvas Experiment | Mostafa Fouad">
-  <meta property="og:description" content="">
-  <meta property="og:image" content="preview.jpg">
-  <meta property="og:url" content="">
+  <meta property="og:title" content="Flappy Bird | Mostafa Fouad">
+  <meta property="og:description" content="Can you get through 100 pairs of pipes without killing the bird? Play now!">
+  <meta property="og:image" content="https://teefouad.github.io/flappy_bird/preview.png">
+  <meta property="og:url" content="https://teefouad.github.io/flappy_bird/">
 
   <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
 
@@ -49,6 +49,11 @@
       width: 100%;
       height: 100%;
       background: url(sky.png) repeat-x center center;
+    }
+
+    .is-ended #canvas {
+      opacity: 0.5;
+      transition: opacity 300ms linear 3000ms;
     }
 
     /* TITLE */
@@ -127,6 +132,12 @@
       display: block;
     }
 
+    .is-ended #score {
+      top: 50%;
+      transform: translate3d(0, -50%, 0) scale(1.5);
+      transition: all 500ms cubic-bezier(0.68, 0.02, 0.36, 1.04) 3200ms;
+    }
+
     /* GAMEOVER */
 
     #gameover {
@@ -143,6 +154,12 @@
       letter-spacing: 4px;
       text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
       transform: translate3d(0, -100px, 0);
+    }
+
+    .is-ended #gameover {
+      opacity: 1;
+      top: 50%;
+      transition: all 500ms cubic-bezier(0.68, 0.02, 0.36, 1.04) 3200ms;
     }
 
     /* PRELOADER */
@@ -191,6 +208,14 @@
       display: none;
     }
 
+    .is-touch #instructions span {
+      display: none;
+    }
+
+    .is-touch #instructions:before {
+      content: 'Tap the screen';
+    }
+
     @keyframes blink {
       0% { opacity: 1; }
       49.9% { opacity: 1; }
@@ -198,22 +223,69 @@
       100% { opacity: 0; }
     }
 
+    /* KILL COUNT */
+
+    #killcount {
+      position: absolute;
+      top: 50%;
+      right: 0;
+      left: 0;
+      margin-top: 70px;
+      z-index: 9;
+      user-select: none;
+      cursor: default;
+      opacity: 0;
+      font-size: 18px;
+      letter-spacing: 1px;
+      line-height: 30px;
+      text-align: center;
+      white-space: nowrap;
+      color: #f44336;
+      text-shadow: 1px 1px #fff, -1px -1px #fff, 1px -1px #fff, -1px 1px #fff;
+    }
+
+    #killcount:empty {
+      opacity: 0 !important;
+    }
+
+    #killcount:before,
+    #killcount:after {
+      vertical-align: top;
+      font-size: 10px;
+      text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.75);
+      color: #fff;
+    }
+
+    #killcount:before {
+      content: '- You\'ve killed ';
+    }
+
+    #killcount:after {
+      content: ' birds so far -';
+    }
+
+    .is-ended #killcount {
+      opacity: 1;
+      transition: all 100ms linear 3200ms;
+    }
+
     /* FOOTER */
 
     #footer {
       position: absolute;
-      bottom: 20%;
-      right: 15%;
-      left: 15%;
+      bottom: 5%;
+      right: 0;
+      left: 0;
       z-index: 9;
       opacity: 0;
       user-select: none;
       cursor: default;
-      font-size: 14px;
+      font-size: 12px;
       line-height: 30px;
       text-align: center;
       letter-spacing: 3px;
-      text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+      white-space: nowrap;
+      text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
     }
 
     #footer span {
@@ -230,37 +302,17 @@
         -10px 0, -8px 0, -6px 0, -4px 0, -2px 0, 0 0, 2px 0, 4px 0, 6px 0, 8px 0, 10px 0,
         -10px 2px, -8px 2px, -6px 2px, -4px 2px, -2px 2px, 0 2px, 2px 2px, 4px 2px, 6px 2px, 8px 2px, 10px 2px, 12px 2px rgba(0, 0, 0, 0.5),
         -10px 4px, -8px 4px, -6px 4px, -4px 4px, -2px 4px, 0 4px, 2px 4px, 4px 4px, 6px 4px, 8px 4px, 10px 4px, 12px 4px rgba(0, 0, 0, 0.5),
-        -8px 6px, -6px 6px, -4px 6px, -2px 6px, 0 6px, 2px 6px, 4px 6px, 6px 6px, 8px 6px, 10px 6px rgba(0, 0, 0, 0.5), 12px 6px rgba(0, 0, 0, 0.5),
-        -6px 8px, -4px 8px, -2px 8px, 0 8px, 2px 8px, 4px 8px, 6px 8px, 8px 8px rgba(0, 0, 0, 0.5), 10px 8px rgba(0, 0, 0, 0.5),
-        -4px 10px, -2px 10px, 0 10px, 2px 10px, 4px 10px, 6px 10px rgba(0, 0, 0, 0.5), 8px 10px rgba(0, 0, 0, 0.5),
-        -2px 12px, 0 12px, 2px 12px, 4px 12px rgba(0, 0, 0, 0.5), 6px 12px rgba(0, 0, 0, 0.5),
-        0 14px, 2px 14px rgba(0, 0, 0, 0.5), 4px 14px rgba(0, 0, 0, 0.5),
-        2px 16px rgba(0, 0, 0, 0.5)
+        -8px 6px, -6px 6px, -4px 6px, -2px 6px, 0 6px, 2px 6px, 4px 6px, 6px 6px, 8px 6px, 10px 6px rgba(0, 0, 0, 0.5),
+        -6px 8px, -4px 8px, -2px 8px, 0 8px, 2px 8px, 4px 8px, 6px 8px, 8px 8px rgba(0, 0, 0, 0.5),
+        -4px 10px, -2px 10px, 0 10px, 2px 10px, 4px 10px, 6px 10px rgba(0, 0, 0, 0.5),
+        -2px 12px, 0 12px, 2px 12px, 4px 12px rgba(0, 0, 0, 0.5),
+        0 14px, 2px 14px rgba(0, 0, 0, 0.5)
         ;
-    }
-
-    /* ENDED */
-
-    .is-ended #score {
-      top: 50%;
-      transform: translate3d(0, -50%, 0) scale(1.5);
-      transition: all 500ms cubic-bezier(0.68, 0.02, 0.36, 1.04) 3200ms;
-    }
-
-    .is-ended #gameover {
-      opacity: 1;
-      top: 50%;
-      transition: all 500ms cubic-bezier(0.68, 0.02, 0.36, 1.04) 3200ms;
     }
 
     .is-ended #footer {
       opacity: 1;
       transition: all 100ms linear 3200ms;
-    }
-
-    .is-ended #canvas {
-      opacity: 0.5;
-      transition: opacity 300ms linear 3000ms;
     }
 
     /* PAUSED */
@@ -275,6 +327,7 @@
       cursor: default;
       font-size: 20px;
       letter-spacing: 3px;
+      white-space: nowrap;
       color: #fff;
       transform: translate3d(-50%, -50%, 0);
       text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
@@ -289,20 +342,35 @@
       transition: opacity 200ms;
     }
   </style>
+
+  <script>
+    (function (i, s, o, g, r, a, m) {
+    i['GoogleAnalyticsObject'] = r; i[r] = i[r] || function () {
+      (i[r].q = i[r].q || []).push(arguments)
+    }, i[r].l = 1 * new Date(); a = s.createElement(o),
+      m = s.getElementsByTagName(o)[0]; a.async = 1; a.src = g; m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-105802525-1', 'auto');
+    ga('send', 'pageview');
+  </script>
 </head>
 <body>
   <div id="container">
     <div id="title">Flappy<br>Bird</div>
-    <div id="instructions"><span>Click</span> anywhere to start the game</div>
+    <div id="instructions"><span>Click anywhere</span> to start the game</div>
     <div id="preloader">0%</div>
     <div id="score"></div>
     <div id="bestscore"></div>
     <div id="gameover">Game over</div>
     <div id="paused">- Paused -</div>
-    <div id="footer">Built with <span>love</span> by Mostafa Fouad</div>
+    <div id="killcount"></div>
+    <div id="footer">Built with <span>love</span> by <br> Mostafa Fouad</div>
     <canvas id="canvas"></canvas>
   </div>
 
-  <script type="text/javascript" src="scripts.js"></script>
+  <script type="text/javascript">
+    !function () { function t(t, i, e) { var s; return e ? ((s = function () { e.apply(this, Array.prototype.slice.call(arguments)), t.apply(this, Array.prototype.slice.call(arguments)) }).prototype = Object.create(e.prototype), Object.assign(s.prototype, i, { constructor: s })) : (s = t).prototype = i, s } function i(t, i, e) { var s = Object.assign({}, { easeInOutCubic: function (t, i, e, s, h) { return (i /= h / 2) < 1 ? s / 2 * i * i * i + e : s / 2 * ((i -= 2) * i * i + 2) + e }, easeOutElastic: function (t, i, e, s, h) { var n = 1.70158, r = 0, o = s; if (0 == i) return e; if (1 == (i /= h)) return e + s; if (r || (r = .3 * h), o < Math.abs(s)) { o = s; n = r / 4 } else n = r / (2 * Math.PI) * Math.asin(s / o); return o * Math.pow(2, -10 * i) * Math.sin((i * h - n) * (2 * Math.PI) / r) + s + e } }, window.animationEasing || {}); Object.keys(i).forEach(function (n) { var r = {}; h(i[n], "object") ? r = i[n] : r.to = i[n]; var o = Object.assign({ time: 0, from: 0, to: 1, duration: 1e3, delay: 0, easing: "easeInOutCubic", step: null, complete: null }, { from: t[n], to: t[n] }, e || {}, r); o.time -= o.delay, function i() { o.time = Math.min(o.time + 1e3 / 60, o.duration), t[n] = s[o.easing](null, Math.max(0, o.time), o.from, o.to - o.from, o.duration), o.step && o.step(t[n], o), o.time >= o.duration ? (o.time = o.duration, o.complete && o.complete(), c(o.id)) : o.id = d(i) }() }) } function e(t, i) { return void 0 === i && (i = t, t = 0), t + Math.random() * (i - t) } function s(t, i) { return void 0 === i && (i = t, t = 0), Math.floor(e(t, i + 1)) } function h(t, i) { return Object.prototype.toString.call(t).toLowerCase() === "[object " + i.toLowerCase() + "]" } function n(t) { var i = Object.assign({}, t); return Object.keys(i).forEach(function (t) { h(i[t], "object") && (i[t] = n(i[t])), h(i[t], "array") && (i[t] = Array.prototype.slice.call(i[t])) }), i } function r(t, i) { return t.right > i.left && t.left < i.right && t.bottom > i.top && t.top < i.bottom } function o(t) { var i = new ArrayBuffer(4); new DataView(i).setUint32(0, parseInt(t.slice(1), 16), !1); var e = new Uint8Array(i); return { red: e[1], green: e[2], blue: e[3], toString: function () { return e[1] + "," + e[2] + "," + e[3] } } } function a() { return !!("ontouchstart" in window) } var d = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.msRequestAnimationFrame || window.oRequestAnimationFrame || function (t) { return window.setTimeout(t, 1e3 / 60) }, c = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.mozCancelAnimationFrame || window.msCancelAnimationFrame || window.oCancelAnimationFrame || function (t) { window.clearTimeout(t) }, p = document.getElementById("canvas"), u = new (t(function (t) { t && (this.canvas = t, this.context = t.getContext("2d"), this.render()) }, { paused: !1, handlers: {}, render: function () { this.context.clearRect(0, 0, this.canvas.width, this.canvas.height), this.paused || (this.trigger("update"), this.trigger("updated")), this.trigger("render"), this.trigger("rendered"), this.frame = d(this.render.bind(this)) }, pause: function () { this.paused = !0 }, resume: function () { this.paused = !1 }, start: function () { this.render() }, stop: function () { c(this.frame) }, on: function (t, i, e) { e = e || 0, this.handlers[t] = this.handlers[t] || {}, this.handlers[t][e] = this.handlers[t][e] || [], this.handlers[t][e].push(i) }, off: function (t, i) { if (this.handlers[t]) for (var e = Object.keys(this.handlers[t]), s = 0; s < e.length; s++)for (var h = this.handlers[t][e[s]], n = 0; n < h.length; n++)if (i === h[n]) return this.handlers[t][e[s]].splice(n, 1), !0; return !1 }, trigger: function (t) { if (this.handlers[t]) for (var i = Object.keys(this.handlers[t]).sort(function (t, i) { return t - i }), e = 0; e < i.length; e++)for (var s = this.handlers[t][i[e]], h = 0; h < s.length; h++)s[h].call() } }))(p); window.addEventListener("resize", function t() { var i = 1 + 880 / window.innerHeight; p.width = i * p.offsetWidth, p.height = i * p.offsetHeight; return function () { clearTimeout(void 0), setTimeout(t, 300) } }()); var y = t(function (t, i) { this.renderer = t, this.canvas = this.renderer.canvas, this.context = this.renderer.context, this.init(i), this.__updateEventListener = this.update.bind(this), this.__renderEventListener = this.render.bind(this), this.renderer.on("update", this.__updateEventListener), this.renderer.on("render", this.__renderEventListener, this.zindex) }, { defaults: { originX: 0, originY: 0, x: 0, y: 0, width: 100, height: 100, rotation: 0, scaleX: 1, scaleY: 1, opacity: 1, zindex: 0, sprite: null, spriteReady: !1, spriteRect: { x: 0, y: 0, width: 100, height: 100 }, showOrigin: !1, showBounds: !1, originColor: "red", boundsColor: "red", onUpdate: null, onRender: null, onDraw: null, onDeath: null }, init: function (t) { this.options = Object.assign({}, n(this.defaults), n(t)), Object.assign(this, n(this.options)) }, update: function () { this.options.onUpdate && this.options.onUpdate.call(this) }, offsetX: function () { return this.originX * this.width }, offsetY: function () { return this.originY * this.height }, animate: function (t, e) { i(this, t, e) }, render: function () { this.beforeDraw(), this.sprite && (!this.spriteImage || this.spriteImage && this.spriteImage.spriteSource !== this.sprite ? (this.spriteImage = new Image(this.width, this.height), this.spriteImage.onload = function () { this.spriteReady = !0, this.drawSprite() }.bind(this), this.spriteImage.src = this.spriteImage.spriteSource = this.sprite) : this.drawSprite()), this.draw(), this.options.onDraw && this.options.onDraw.call(this), this.afterDraw(), this.options.onRender && this.options.onRender.call(this) }, beforeDraw: function () { this.context.save(), this.context.globalAlpha = this.opacity, this.context.translate(this.x, this.y), this.context.rotate(this.rotation * Math.PI / 180), this.context.scale(this.scaleX, this.scaleY) }, draw: function () { }, afterDraw: function () { this.showOrigin && this.drawOrigin(), this.showBounds && this.drawBounds(), this.context.restore() }, drawSprite: function () { this.spriteReady && this.context.drawImage(this.spriteImage, this.spriteRect.x, this.spriteRect.y, this.spriteRect.width, this.spriteRect.height, -this.offsetX(), -this.offsetY(), this.width, this.height) }, drawBounds: function () { this.context.beginPath(), this.context.rect(0 - this.offsetX(), 0 - this.offsetY(), this.width, this.height), this.context.strokeStyle = this.boundsColor, this.context.stroke() }, drawOrigin: function () { this.context.beginPath(), this.context.arc(0, 0, 5, 0, 2 * Math.PI, !1), this.context.fillStyle = this.originColor, this.context.fill() }, getBounds: function () { return { top: this.y - this.offsetY(), bottom: this.y - this.offsetY() + this.height, left: this.x - this.offsetX(), right: this.x - this.offsetX() + this.width } }, destroy: function () { this.destroyed = !0, this.renderer.off("update", this.__updateEventListener), this.renderer.off("render", this.__renderEventListener), this.options.onDeath && this.options.onDeath.call(this) } }), l = t(function (t, i) { }, { defaults: Object.assign({}, n(y.prototype.defaults), { fps: 10, speed: 1, breakpoints: [], framesCount: 0, totalFrames: 1, paused: !1, reversed: !1, loop: !1 }), update: function () { if (!this.paused) { var t = 60 * (this.totalFrames - 1) / this.fps, i = this.framesCount + (this.reversed ? -this.speed : this.speed); this.setFramesCount(Math.max(0, Math.min(t, i))), this.loop && (i > t ? this.setFramesCount(0) : i < 0 && this.setFramesCount(t)) } this.spriteRect.y = this.options.spriteRect.y + this.currentFrame() * this.spriteRect.height, -1 != this.breakpoints.indexOf(this.currentFrame) && this.pause(), y.prototype.update.call(this) }, setFramesCount: function (t) { this.framesCount = Math.max(0, Math.min(60 * (this.totalFrames - 1) / this.fps, t)) }, stop: function () { this.pause(), this.goto(this.totalFrames - 1) }, pause: function () { this.paused = !0 }, play: function () { this.paused = !1 }, reverse: function () { this.reversed = !0 }, forward: function () { this.reversed = !1 }, goto: function (t) { this.setFramesCount(60 * t / this.fps) }, gotoAndPlay: function (t) { this.goto(t), this.play() }, gotoAndStop: function (t) { this.goto(t), this.pause() }, nextFrame: function () { this.goto(this.currentFrame + 1) }, prevFrame: function (t) { this.goto(this.currentFrame - 1) }, currentFrame: function () { return Math.floor(this.framesCount * this.fps / 60) } }, y), g = t(function (t, i) { this.anatomy = { beak: new y(this.renderer, { sprite: "bird-sprite.png", spriteRect: { x: 100, y: 50, width: 40, height: 70 }, width: 40, height: 70, zindex: 1 }), tail_outer: new y(this.renderer, { sprite: "bird-sprite.png", spriteRect: { x: 160, y: 0, width: 40, height: 47 }, width: 40, height: 47, originX: 1, originY: 0, zindex: 1 }), tail_inner: new y(this.renderer, { sprite: "bird-sprite.png", spriteRect: { x: 160, y: 47, width: 40, height: 47 }, width: 40, height: 47, originX: 1, originY: 0, zindex: 1 }), feet_inner: new y(this.renderer, { sprite: "bird-sprite.png", spriteRect: { x: 180, y: 100, width: 40, height: 20 }, width: 40, height: 20, originX: .5, originY: 0, zindex: 1 }), body: new y(this.renderer, { sprite: "bird-sprite.png", spriteRect: { x: 0, y: 0, width: 100, height: 120 }, width: 100, height: 120, originX: .5, originY: .5, zindex: 1 }), feet_outer: new y(this.renderer, { sprite: "bird-sprite.png", spriteRect: { x: 140, y: 100, width: 40, height: 20 }, width: 40, height: 20, originX: .5, originY: 0, zindex: 1 }), eye: new y(this.renderer, { sprite: "bird-sprite.png", spriteRect: { x: 100, y: 0, width: 35, height: 50 }, width: 35, height: 50, originX: .5, originY: .5, zindex: 1 }), pupil: new y(this.renderer, { sprite: "bird-sprite.png", spriteRect: { x: 140, y: 0, width: 8, height: 10 }, width: 8, height: 10, originX: .5, originY: .5, zindex: 1 }), wing: new l(this.renderer, { sprite: "bird-sprite.png", spriteRect: { x: 200, y: 0, width: 70, height: 50 }, width: 70, height: 50, originX: .5, originY: 1, totalFrames: 2, paused: !0, zindex: 1 }) } }, { defaults: Object.assign({}, n(y.prototype.defaults), { width: 100, height: 120, originX: .5, originY: .5, dir: 1, vx: 0, vy: 0, strength: 20, weight: 1.1, wingFlap: 0, anatomy: {}, pupilDX: 8, pupilDY: 0 }), update: function () { this.x; var t = this.y; this.x += this.dir * this.vx, this.y += this.vy, this.vy += this.weight, this.anatomy.beak.x = this.x + 40 * this.dir, this.anatomy.beak.y = this.y - 44, this.anatomy.beak.scaleX = this.dir, this.anatomy.tail_outer.x = this.x - 44 * this.dir, this.anatomy.tail_outer.y = this.y + 14, this.anatomy.tail_outer.scaleX = this.dir, this.anatomy.tail_outer.rotation = 2 * (this.dir * (this.y - t) + this.dir), this.anatomy.tail_inner.x = this.x - 40 * this.dir, this.anatomy.tail_inner.y = this.y + 22, this.anatomy.tail_inner.scaleX = this.dir, this.anatomy.tail_inner.rotation += (1.5 * this.dir * (this.y - t) - this.anatomy.tail_inner.rotation) / 3, this.anatomy.feet_inner.x = this.x + 0 * this.dir, this.anatomy.feet_inner.y = this.y + 55, this.anatomy.feet_inner.scaleX = this.dir, this.anatomy.feet_inner.rotation += (-2 * this.dir * (this.y - t - 5) - this.anatomy.feet_inner.rotation) / 3, this.anatomy.body.x = this.x, this.anatomy.body.y = this.y, this.anatomy.body.scaleX = this.dir, this.anatomy.feet_outer.x = this.x + 0 * this.dir, this.anatomy.feet_outer.y = this.y + 60, this.anatomy.feet_outer.scaleX = this.dir, this.anatomy.feet_outer.rotation += (-1.5 * this.dir * (this.y - t - 15) - this.anatomy.feet_outer.rotation) / 3, this.anatomy.eye.x = this.x + 28 * this.dir, this.anatomy.eye.y = this.y - 30, this.anatomy.eye.scaleX = this.dir, this.anatomy.pupil.x = this.x + this.pupilDX + 38 * this.dir, this.anatomy.pupil.y = this.y + this.pupilDY - 30, this.anatomy.pupil.x = this.x + this.pupilDX + 30 * this.dir, this.anatomy.pupil.y = this.y + this.pupilDY - 30, this.wingFlap = Math.max(0, .4 * this.wingFlap), this.anatomy.wing.x = this.x - 20 * this.dir, this.anatomy.wing.y = this.y + 10, this.anatomy.wing.rotation = Math.min(25, Math.max(-25, 2 * this.dir * (this.y - t))) - 15 * this.dir, this.anatomy.wing.scaleX = this.dir, this.anatomy.wing.scaleY += (Math.min(1.25, Math.max(-1.25, .25 * (4 + this.y - t + this.wingFlap))) - this.anatomy.wing.scaleY) / 1.2, this.anatomy.wing.goto(this.anatomy.wing.scaleY > 0 ? 0 : 1), y.prototype.update.call(this) }, flap: function (t) { this.wingFlap = 30 * (t || this.strength), this.vy = -1 * (t || this.strength) }, blink: function () { var t = this.anatomy.eye; t.animate({ scaleY: { to: 0, duration: 40, complete: function () { t.animate({ scaleY: { to: 1, duration: 80 } }) } } }); var i = this.anatomy.pupil; i.animate({ scaleY: { to: 0, duration: 80, complete: function () { i.animate({ scaleY: { to: 1, duration: 80 } }) } } }) }, lookAt: function (t, i) { this.animate({ pupilDX: { to: Math.min(9, Math.max(-10, .1 * (t - this.x))), duration: 80 }, pupilDY: { to: Math.min(10, Math.max(-10, .1 * (i - this.y))), duration: 80 } }) }, destroy: function () { y.prototype.destroy.call(this), Object.keys(this.anatomy).forEach(function (t) { this.anatomy[t].destroy() }.bind(this)) } }, y), f = t(function (t, i) { this.counter = 0 }, { defaults: Object.assign({}, n(l.prototype.defaults), { width: 200, height: 200, originX: .5, originY: .5, sprite: "bird-shocked.png", spriteRect: { x: 0, y: 0, width: 200, height: 200 }, totalFrames: 6, fps: 24, loop: !0 }), update: function () { l.prototype.update.call(this), this.scaleX = e(.95, 1.05), this.scaleY = e(.95, 1.05), this.counter <= 0 ? (this.counter = e(5, 15), this.spriteRect.x = this.width * s(2)) : this.counter-- } }, l), m = t(function (t, i) { this.anatomy = { ring_top: new y(this.renderer, { sprite: "bird-ghost.png", spriteRect: { x: 110, y: 90, width: 75, height: 10 }, width: 75, height: 10, originX: .5, originY: 1, x: this.x, y: this.y, zindex: 4 }), ring_bottom: new y(this.renderer, { sprite: "bird-ghost.png", spriteRect: { x: 110, y: 100, width: 75, height: 11 }, width: 75, height: 11, originX: .5, originY: 0, x: this.x, y: this.y, zindex: 6 }), body: new y(this.renderer, { sprite: "bird-ghost.png", spriteRect: { x: 0, y: 0, width: 100, height: 120 }, width: 100, height: 120, originX: .5, originY: .5, scaleX: 0, scaleY: 0, zindex: 5 }), wing_right: new y(this.renderer, { sprite: "bird-ghost.png", spriteRect: { x: 110, y: 0, width: 100, height: 72 }, width: 100, height: 72, originX: 1, originY: 1, zindex: -1, scaleX: -1.25, scaleY: 1.25, opacity: .95, zindex: 4 }), wing_left: new y(this.renderer, { sprite: "bird-ghost.png", spriteRect: { x: 110, y: 0, width: 100, height: 72 }, width: 100, height: 72, originX: 1, originY: 1, zindex: -1, scaleX: 1.25, scaleY: 1.25, opacity: .95, zindex: 4 }) }, this.timeout = setTimeout(function t() { this.vy = -8, this.timeout = setTimeout(t.bind(this), 1500) }.bind(this), 700), this.anatomy.body.animate({ scaleX: { to: 1, duration: 600, easing: "easeOutElastic" }, scaleY: { to: 1, duration: 400, easing: "easeOutElastic" } }), this.anatomy.wing_right.animate({ scaleX: { from: 0, to: this.anatomy.wing_right.options.scaleX, easing: "easeInOutCubic", duration: 600, delay: 300 }, scaleY: { from: 0, to: this.anatomy.wing_right.options.scaleY, easing: "easeInOutCubic", duration: 600, delay: 300 } }), this.anatomy.wing_left.animate({ scaleX: { from: 0, to: this.anatomy.wing_left.options.scaleX, easing: "easeInOutCubic", duration: 600, delay: 300 }, scaleY: { from: 0, to: this.anatomy.wing_left.options.scaleY, easing: "easeInOutCubic", duration: 600, delay: 300 } }) }, { defaults: Object.assign({}, n(y.prototype.defaults), { anatomy: {}, width: 200, height: 200, originX: .5, originY: .5, vy: -1, oy: 0 }), update: function () { this.oy = this.y, this.y += this.vy, this.vy += .1, this.anatomy.body.scaleY += (1 - .035 * (this.y - this.oy) - this.anatomy.body.scaleY) / 5, this.anatomy.body.scaleX += (1 - this.anatomy.body.scaleY + 1 - this.anatomy.body.scaleX) / 5, this.anatomy.ring_top.x = this.x, this.anatomy.ring_top.y += (this.y - 90 - .25 * (this.y - this.oy) - this.anatomy.ring_top.y) / 5, this.anatomy.ring_bottom.x = this.x, this.anatomy.ring_bottom.y = this.anatomy.ring_top.y, this.anatomy.body.x = this.x, this.anatomy.body.y = this.y, this.anatomy.wing_right.x = this.x - 10, this.anatomy.wing_right.y = this.y - 20, this.anatomy.wing_right.rotation += (Math.max(-30, -17 * (this.y - this.oy)) - this.anatomy.wing_right.rotation) / 5, this.anatomy.wing_left.x = this.x + 10, this.anatomy.wing_left.y = this.y - 20, this.anatomy.wing_left.rotation += (Math.min(30, 17 * (this.y - this.oy)) - this.anatomy.wing_left.rotation) / 5, this.y < -this.height && this.destroy(), y.prototype.update.call(this) }, destroy: function () { y.prototype.destroy.call(this), Object.keys(this.anatomy).forEach(function (t) { this.anatomy[t].destroy() }.bind(this)), clearTimeout(this.timeout) } }, y), w = t(function (t, i) { this.dvx = e(.1, .3), this.dvy = e(.09, .18), this.maxVY = e(1.5, 2.5), this.rotation = e(360), this.dr = e(180, 360), this.ddr = e(.9, .98), this.t = e(360), this.wt = .04, this.amplitude = e(10, 20), this.spriteRect.y = e(1) > .5 ? 0 : 47 }, { defaults: Object.assign({}, n(y.prototype.defaults), { sprite: "bird-sprite.png", spriteRect: { x: 160, y: 0, width: 40, height: 47 }, width: 40, height: 47, originX: .5, originY: .5, zindex: 1, vx: 0, vy: 0 }), update: function () { this.t += this.wt, this.x += this.vx + .3 * this.amplitude * Math.sin(this.t), this.y += this.vy, this.vx *= this.dvx, this.vy = Math.min(this.maxVY, this.vy + this.dvy), this.rotation = this.amplitude * Math.cos(this.t) - 135 + this.dr, this.dr *= this.ddr, this.y > this.canvas.height + this.height && this.destroy(), y.prototype.update.call(this) } }, y), b = t(function (t, i) { }, { defaults: Object.assign({}, n(y.prototype.defaults), { radius: 20, lightColor: "#f0f0f0", shadeColor: "#d9d9d9" }), draw: function () { var t = o(this.shadeColor); this.context.beginPath(), this.context.arc(0, 0, this.radius, 0, 2 * Math.PI, !0), this.context.fillStyle = "rgba(" + t.red + ", " + t.green + ", " + t.blue + ", " + this.opacity + ")", this.context.fill(); var i = o(this.lightColor); this.context.beginPath(), this.context.arc(0, -.2 * this.radius, .8 * this.radius, 0, 2 * Math.PI, !0), this.context.fillStyle = "rgba(" + i.red + ", " + i.green + ", " + i.blue + ", " + this.opacity + ")", this.context.fill() } }, y), x = t(function (t, i) { this.particles = [], this.blast = new b(this.renderer, { x: this.x, y: this.y, radius: 0 }); for (var s = 0; s < 50; s++)this.particles.push(new b(this.renderer, { x: this.x + e(-30, 30), y: this.y + e(-30, 30), radius: e(10, 30), vx: e(-10, 10), vy: e(-2, 5), vya: e(.1, .25), decay: e(.5, .65), amplitude: 0, t: e(2), dt: e(-.02, .02), zindex: this.zindex })) }, { defaults: Object.assign({}, n(y.prototype.defaults), { blastSize: 80 }), update: function () { this.blastSize += 3, this.blast.radius += (this.blastSize - this.blast.radius) / 2, this.blast.opacity -= .06, this.blast.radius > .55 * this.blastSize && this.particles.forEach(function (t, i) { t.t += t.dt, t.amplitude += 3 * t.dt, t.x += t.vx + t.amplitude * Math.sin(t.t), t.y += t.vy, t.vx *= .92, t.vy -= t.vya, t.radius -= t.decay, t.radius <= 0 && (t.destroy(), this.particles.splice(i, 1)) }.bind(this)), 0 === this.particles.length && (this.destroy(), this.blast.destroy()) } }, y), v = t(function (t, i) { }, { defaults: Object.assign({}, n(y.prototype.defaults), { sprite: "clouds.png", width: 280, height: 140, originX: .5, originY: .5, spriteRect: { x: 0, y: 0, width: 280, height: 140 }, shape: 0, t: e(10) }), update: function () { this.t += .05, this.scaleX = this.depth * (1 + .08 * Math.sin(this.t)), this.scaleY = this.depth + .75 * (this.depth - this.scaleX), this.opacity = 1.5 * this.depth, this.spriteRect.y = this.shape * this.spriteRect.height, y.prototype.update.call(this) } }, y), _ = t(function (t, i) { "top" === this.placement && (this.sprite = "pipes-top.png") }, { defaults: Object.assign({}, n(y.prototype.defaults), { sprite: "pipes-bottom.png", width: 280, height: 1102, originX: .5, spriteRect: { x: 0, y: 0, width: 280, height: 1102 }, placement: "bottom", shape: 0 }), update: function () { this.spriteRect.x = this.shape * this.spriteRect.width, y.prototype.update.call(this) } }, y), k = t(function (t, i) { "top" === this.placement && (this.sprite = "wires-top.png"), this.tx = 0, this.ty = 0 }, { defaults: Object.assign({}, n(y.prototype.defaults), { sprite: "wires-bottom.png", width: 280, height: 1102, originX: .5, spriteRect: { x: 0, y: 0, width: 280, height: 1102 }, placement: "bottom", shape: 0, zap: !1 }), update: function () { this.spriteRect.x = this.shape * (4 * this.spriteRect.width), this.zap ? (this.tx += (e(-.03, .03) - this.tx) / 3, this.ty += (e(-.0015, .0025) - this.ty) / 3, this.spriteRect.x = this.shape * (4 * this.spriteRect.width) + s(1, 3) * this.spriteRect.width) : (this.tx += (0 - this.tx) / 21, this.ty += (0 - this.ty) / 21), this.scaleX = 1 + this.tx, this.scaleY = 1 + this.ty, y.prototype.update.call(this) } }, y), Y = t(function (t) { this.renderer = t, this.canvas = this.renderer.canvas, this.context = this.renderer.context, this.bestScore = localStorage.getItem("fb_score") || 0, this.__updateEventListener = this.update.bind(this), this.__keyDownEventListener = this.keydown.bind(this), this.__keyUpEventListener = this.keyup.bind(this), this.__mouseDownEventListener = this.mousedown.bind(this), this.renderer.on("update", this.__updateEventListener), window.addEventListener("keydown", this.__keyDownEventListener), window.addEventListener("keyup", this.__keyUpEventListener), window.addEventListener(a() ? "touchstart" : "mousedown", this.__mouseDownEventListener), this.reset() }, { _started: !1, _paused: !1, _ended: !1, _score: 0, _bestScore: 0, speed: 6, minSpeed: 6, maxSpeed: 6.7, speedStep: .04, pipes: {}, pipeID: 0, clouds: {}, cloudID: 0, set started(t) { this._started = t, document.body.classList[t ? "add" : "remove"]("is-started") }, get started() { return this._started }, set paused(t) { this._paused = t, document.body.classList[t ? "add" : "remove"]("is-paused") }, get paused() { return this._paused }, set ended(t) { this._ended = t, document.body.classList[t ? "add" : "remove"]("is-ended") }, get ended() { return this._ended }, set score(t) { this._score = t, score.innerHTML = this._score }, get score() { return this._score }, set bestScore(t) { this._bestScore = t, bestscore.innerHTML = this._bestScore }, get bestScore() { return this._bestScore }, reset: function () { this.started = !1, this.paused = !1, this.ended = !1, this.speed = this.minSpeed, this.score = 0, this.pipeID = 0, Object.keys(this.pipes).forEach(function (t) { this.destroyPipe(t) }.bind(this)), this.timeToNextPipe = 200, this.cloudID = 0, Object.keys(this.clouds).forEach(function (t) { this.destroyCloud(t) }.bind(this)), this.timeToNextCloud = 0; for (var t = 0; t < s(5, 8); t++)this.createCloud(e(this.canvas.width), e(this.canvas.height)); this.bird && this.bird.destroy(), this.birdGhost && this.birdGhost.destroy(), this.deadFeathers && this.deadFeathers.forEach(function (t) { t.destroy() }), this.bird = new g(this.renderer, { x: .2 * this.canvas.width, y: -200 }), this.blinkCounter = -1, this.lookCounter = -1 }, start: function () { this.started = !0 }, pause: function () { !this.ended && this.started && (this.paused = !0, this.renderer.pause()) }, resume: function () { this.ended || (this.paused = !1, this.renderer.resume()) }, end: function () { this.ended || (this.ended = !0, this.bird.destroy(), setTimeout(function () { this.canRestart = !0 }.bind(this), 3e3)) }, update: function () { if (!this.paused) { if (this.ended && (this.speed = 0), this.started || this.ended || this.bird.y > .55 * this.canvas.height && this.bird.flap(16), this.blinkCounter <= 0 ? (this.blinkCounter = s(10, 300), this.bird.blink()) : this.blinkCounter-- , this.started && this.score > 0) { if (this.lookCounter <= 0) { var t = e(10); if (t <= 1.5 && "screen" == this.eyeTarget && (t += 1.5), t > 1.5) { var i = Object.keys(this.pipes), h = s(i.length - 1); this.eyeTarget = this.pipes[i[h]] } else this.bird.lookAt(this.bird.x, this.bird.y), this.eyeTarget = "screen"; this.lookCounter = s(50, 300) } else this.lookCounter--; if (this.eyeTarget instanceof _ && !this.eyeTarget.destroyed) { var n = this.eyeTarget.x, r = this.eyeTarget.y; "bottom" === this.eyeTarget.placement ? r -= this.eyeTarget.height : r += this.eyeTarget.height, this.bird.lookAt(n, r) } else "screen" !== this.eyeTarget && (this.lookCounter = 0) } this.started && (this.bird.y < .5 * this.bird.height && (this.bird.y = .5 * this.bird.height, this.bird.vy = 5), this.bird.y > this.canvas.height - .5 * this.bird.height && (this.bird.y = this.canvas.height - .5 * this.bird.height, this.bird.vy = -20)), this.timeToNextCloud <= 0 ? Object.keys(this.clouds).length < 8 && (this.timeToNextCloud = s(70, 100), this.createCloud()) : this.timeToNextCloud-- , Object.keys(this.clouds).forEach(function (t) { var i = this.clouds[t]; i.x -= .5 * this.speed, i.x < -.5 * i.width && this.destroyCloud(t) }.bind(this)), this.started && (this.timeToNextPipe <= 0 ? (this.timeToNextPipe = s(100, 130), this.createPipes()) : this.timeToNextPipe--), Object.keys(this.pipes).forEach(function (t) { var i = this.pipes[t]; if (i.x -= this.speed, i.wires.x = i.x, i.y <= 0 && i.x + .5 * i.width < this.bird.x && !i.passed && (i.passed = !0, this.ended || (this.score += 1, this.score > this.bestScore && (this.bestScore = this.score, localStorage.setItem("fb_score", this.bestScore)), this.speed = Math.min(this.maxSpeed, this.speed + this.speedStep))), i.x < -.5 * i.width && this.destroyPipe(t), !this.ended && this.birdHitsPipe(i)) { this.end(), i.wires.zap = !0, this.birdGhost = new f(this.renderer, { x: this.bird.x, y: this.bird.y }), setTimeout(function () { i.wires.zap = !1, new x(this.renderer, { x: this.birdGhost.x, y: this.birdGhost.y, zindex: 10 }), this.deadFeathers = []; for (var t = s(8, 15), h = 0; h < t; h++)this.deadFeathers.push(new w(this.renderer, { x: this.birdGhost.x, y: this.birdGhost.y, vx: e(15, 40) * Math.cos(360 / t * (h + 1) * Math.PI / 180), vy: e(8, 15) * Math.sin(360 / t * (h + 1) * Math.PI / 180), zindex: e(1) > .5 ? 10 : 0 })); this.birdGhost.destroy(), this.birdGhost = new m(this.renderer, { x: this.bird.x + 15, y: this.bird.y + 10 }) }.bind(this), 1e3), navigator.vibrate && navigator.vibrate(1e3); var h = +localStorage.getItem("fb_killCount") || 0; localStorage.setItem("fb_killCount", h + 1), h + 1 >= 3 && (killcount.innerHTML = h + 1) } }.bind(this)) } }, birdHitsPipe: function (t) { var i = this.bird.getBounds(), e = n(i); e.left += .5 * this.bird.width, e.right -= .1 * this.bird.width, e.bottom -= .25 * this.bird.width; var s = n(i); s.right -= .15 * this.bird.width, s.left += .05 * this.bird.width, s.top += .5 * this.bird.height, s.bottom -= .05 * this.bird.height; var h = n(i); h.right += .3 * this.bird.width, h.left = h.right - .3 * this.bird.width, h.top += .3 * this.bird.height, h.bottom = h.top + .25 * this.bird.height; var o = t.getBounds(); return o.right -= .1 * t.width, o.left += .15 * t.width, r(e, o) || r(s, o) || r(h, o) }, createCloud: function (t, i) { if (!this.paused && !this.ended) { var h = new v(this.renderer, { x: void 0 !== t ? t : this.canvas.width + v.prototype.defaults.width, y: void 0 !== i ? i : e(this.canvas.height), depth: e(.25, 1), shape: s(3), zindex: -2 }); this.clouds[++this.cloudID] = h } }, destroyCloud: function (t) { this.clouds[t] && (this.clouds[t].destroy(), delete this.clouds[t]) }, createPipes: function () { if (!this.paused && !this.ended) { var t = 440 + 50 * (this.maxSpeed - this.speed) - 50 * (this.speed - this.minSpeed), i = e(.25, .75) * this.canvas.height, h = new _(this.renderer, { x: this.canvas.width + _.prototype.defaults.width, y: i - _.prototype.defaults.height - .5 * t, originY: 0, placement: "top", shape: s(3) }); this.pipes[++this.pipeID] = h, h.wires = new k(this.renderer, { x: h.x, y: h.y, originY: 0, placement: "top", shape: s(1) }); var n = new _(this.renderer, { x: this.canvas.width + _.prototype.defaults.width, y: i + _.prototype.defaults.height + .5 * t, originY: 1, placement: "bottom", shape: s(3) }); this.pipes[++this.pipeID] = n, n.wires = new k(this.renderer, { x: n.x, y: n.y, originY: 1, placement: "bottom", shape: s(1) }) } }, destroyPipe: function (t) { this.pipes[t] && (this.pipes[t].wires.destroy(), this.pipes[t].destroy(), delete this.pipes[t]) }, destroy: function () { this.end(), Object.keys(this.pipes).forEach(function (t) { this.destroyPipe(t) }.bind(this)), Object.keys(this.clouds).forEach(function (t) { this.destroyCloud(t) }.bind(this)), this.renderer.off("update", this.__updateEventListener), window.removeEventListener("keydown", this.__keyDownEventListener), window.removeEventListener("keyup", this.__keyUpEventListener), window.removeEventListener(a() ? "touchstart" : "mousedown", this.__mouseDownEventListener) }, mousedown: function (t) { this.useAction() }, keydown: function (t) { 27 === t.keyCode ? this.paused ? this.resume() : this.pause() : this.keyDownTimeout || (this.useAction(), this.keyDownTimeout = setTimeout(function () { delete this.keyDownTimeout }.bind(this), 150)) }, keyup: function (t) { }, useAction: function () { this.ended ? this.canRestart && (this.canRestart = !1, this.reset()) : (this.started || this.start(), this.paused && this.resume(), this.bird.flap()) } }); a() && document.body.classList.add("is-touch"), function (t, i, e) { function s(n) { if (t.length === h) return i && i(); var r = new Image; r.onload = function () { h++ , e && e(h / t.length), s(t[h]) }, r.src = n, r.style.visibility = "hidden", r.style.width = "1px", r.style.height = "1px", r.style.position = "fixed", document.body.appendChild(r) } var h = 0; s(t[h]) }(["bird-sprite.png", "bird-shocked.png", "bird-ghost.png", "pipes-top.png", "pipes-bottom.png", "wires-top.png", "wires-bottom.png", "clouds.png"], function () { document.body.classList.add("is-loaded"); var t = new Y(u); window.addEventListener("blur", function () { t.pause() }) }, function (t) { preloader.innerHTML = Math.ceil(100 * t) + "%" }) }();
+  </script>
 </body>
 </html>
