@@ -1,4 +1,4 @@
-(function() {
+(function () {
 
   /* ============================================ */
   /* FRAME ANIMATION POLYFILLS
@@ -37,7 +37,7 @@
   /* ============================================ */
 
   /**
-   * Creates a class.
+   * Creates a class
    * @param {Function} $constructor Class constructor
    * @param {Object}   $class       Class body
    * @param {Class}    $parent      Class to inherit from
@@ -166,7 +166,7 @@
   }
 
   /**
-   * Generates a random float number.
+   * Generates a random float number
    * @param  {Number} min Minimum value
    * @param  {Number} max Maximum value
    * @return {Number}     The generated random number
@@ -181,7 +181,7 @@
   }
 
   /**
-   * Generates a random integer.
+   * Generates a random integer
    * @param  {Number} min Minimum value
    * @param  {Number} max Maximum value
    * @return {Number}     The generated random integer
@@ -278,10 +278,64 @@
   }
 
   /* ============================================ */
-  /* RENDER
+  /* DISPATCHER
   /* ============================================ */
 
-  var canvas = document.getElementById('canvas');
+  var Dispatcher = createClass(
+    function () {
+      this.handlers = {};
+    },
+    {
+      on: function (event, callback, order) {
+        order = order || 0;
+        this.handlers[event] = this.handlers[event] || {};
+        this.handlers[event][order] = this.handlers[event][order] || [];
+        this.handlers[event][order].push(callback);
+        return this;
+      },
+
+      off: function (event, callback) {
+        if (this.handlers[event]) {
+          var orders = Object.keys(this.handlers[event]);
+
+          for (var i = 0; i < orders.length; i++) {
+            var callbacks = this.handlers[event][orders[i]];
+
+            for (var j = 0; j < callbacks.length; j++) {
+              if (callback === callbacks[j]) {
+                this.handlers[event][orders[i]].splice(j, 1);
+                return this;
+              }
+            }
+          }
+        }
+
+        return this;
+      },
+
+      trigger: function (event) {
+        if (this.handlers[event]) {
+          var orders = Object.keys(this.handlers[event]).sort(function (a, b) {
+            return a - b;
+          });
+
+          for (var i = 0; i < orders.length; i++) {
+            var callbacks = this.handlers[event][orders[i]];
+
+            for (var j = 0; j < callbacks.length; j++) {
+              callbacks[j].apply(window, [new Event(event)].concat(Array.prototype.slice.call(arguments, 1)));
+            }
+          }
+        }
+
+        return this;
+      }
+    }
+  );
+
+  /* ============================================ */
+  /* RENDERER
+  /* ============================================ */
 
   var Renderer = createClass(
     function (canvas) {
@@ -291,24 +345,8 @@
         this.render();
       }
     },
-
     {
       paused: false,
-      handlers: {},
-
-      render: function () {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        if (!this.paused) {
-          this.trigger('update');
-          this.trigger('updated');
-        }
-
-        this.trigger('render');
-        this.trigger('rendered');
-
-        this.frame = raf(this.render.bind(this));
-      },
 
       pause: function () {
         this.paused = true;
@@ -326,67 +364,149 @@
         caf(this.frame);
       },
 
-      on: function (event, callback, order) {
-        order = order || 0;
-        this.handlers[event] = this.handlers[event] || {};
-        this.handlers[event][order] = this.handlers[event][order] || [];
-        this.handlers[event][order].push(callback);
-      },
+      render: function () {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-      off: function (event, callback) {
-        if (this.handlers[event]) {
-          var orders = Object.keys(this.handlers[event]);
-
-          for (var i = 0; i < orders.length; i++) {
-            var callbacks = this.handlers[event][orders[i]];
-
-            for (var j = 0; j < callbacks.length; j++) {
-              if (callback === callbacks[j]) {
-                this.handlers[event][orders[i]].splice(j, 1);
-                return true;
-              }
-            }
-          }
+        if (!this.paused) {
+          this.trigger('update');
+          this.trigger('updated');
         }
 
-        return false;
+        this.trigger('render');
+        this.trigger('rendered');
+
+        this.frame = raf(this.render.bind(this));
       },
-
-      trigger: function (event) {
-        if (this.handlers[event]) {
-          var orders = Object.keys(this.handlers[event]).sort(function (a, b) {
-            return a - b;
-          });
-
-          for (var i = 0; i < orders.length; i++) {
-            var callbacks = this.handlers[event][orders[i]];
-
-            for (var j = 0; j < callbacks.length; j++) {
-              callbacks[j].call();
-            }
-          }
-        }
-      }
-    }
+    },
+    Dispatcher
   );
 
-  var renderer = new Renderer(canvas);
+  /* ============================================ */
+  /* AUDIO MANAGER
+  /* ============================================ */
 
-  // resize canvas
+  var AudioManager = createClass(
+    function () {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext);
+    },
+    {
+      loading: false,
+      buffers: {},
+      sources: {},
 
-  window.addEventListener('resize', (function resizeCanvas() {
-    var scaleFactor = 1 + (0.8 * 1100 / window.innerHeight);
+      load: function (soundsArray) {
+        var remaining = soundsArray.slice();
 
-    canvas.width = scaleFactor * canvas.offsetWidth;
-    canvas.height = scaleFactor * canvas.offsetHeight;
+        this.loadSound(remaining[0].name, remaining[0].url, function loadNext() {
+          remaining.shift();
 
-    // throttle
-    var timeout;
-    return function () {
-      clearTimeout(timeout);
-      setTimeout(resizeCanvas, 300);
-    };
-  }()));
+          this.trigger('progress', (soundsArray.length - remaining.length) / soundsArray.length);
+
+          if (remaining.length) {
+            this.loadSound(remaining[0].name, remaining[0].url, loadNext.bind(this));
+          } else {
+            this.trigger('finish');
+          }
+        }.bind(this));
+      },
+
+      loadSound: function (name, url, callback) {
+        this.loading = true;
+
+        if (this.xhr) {
+          this.xhr.abort();
+        }
+
+        this.xhr = new XMLHttpRequest();
+        this.xhr.responseType = 'arraybuffer';
+        this.xhr.open('GET', url, true);
+
+        this.xhr.onload = function () {
+          this.ctx.decodeAudioData(this.xhr.response, function (buffer) {
+            this.loading = false;
+            this.buffers[name] = buffer;
+            callback && callback();
+          }.bind(this));
+        }.bind(this);
+
+        this.xhr.send();
+      },
+
+      play: function (name, volume, loop) {
+        volume = typeof volume === 'undefined' ? 1 : volume;
+
+        var gainNode = this.ctx.createGain();
+        gainNode.gain.value = volume;
+        gainNode.connect(this.ctx.destination)
+
+        var source = this.ctx.createBufferSource();
+        source.buffer = this.buffers[name];
+        source.loop = loop;
+        source.connect(gainNode);
+        source.start();
+
+        this.sources[name] = source;
+      },
+
+      stop: function (name) {
+        this.sources[name].stop();
+      },
+
+      stopAll: function () {
+        Object.keys(this.sources).forEach(function (name) {
+          this.stop(name);
+        }.bind(this));
+      }
+    },
+    Dispatcher
+  );
+
+  /* ============================================ */
+  /* SPRITE LOADER
+  /* ============================================ */
+
+  var SpriteLoader = createClass(
+    function () {
+      // constructor
+    },
+    {
+      loading: false,
+
+      load: function (spritesArray) {
+        var remaining = spritesArray.slice();
+
+        this.loadSprite(remaining[0].name, remaining[0].url, function loadNext(name, img) {
+          remaining.shift();
+
+          this.trigger('progress', {
+            progress: (spritesArray.length - remaining.length) / spritesArray.length,
+            name: name,
+            image: img
+          });
+
+          if (remaining.length) {
+            this.loadSprite(remaining[0].name, remaining[0].url, loadNext.bind(this));
+          } else {
+            this.trigger('finish');
+          }
+        }.bind(this));
+      },
+
+      loadSprite: function (name, url, callback) {
+        this.loading = true;
+
+        var img = new Image();
+
+        img.onload = function () {
+          this.loading = false;
+          callback && callback(name, img);
+        }.bind(this);
+
+        img.src = url;
+      }
+    },
+    Dispatcher
+  );
 
   /* ============================================ */
   /* CANVAS OBJECT
@@ -461,6 +581,16 @@
         this.beforeDraw();
 
         if (this.sprite) {
+          if (
+            window.spritesCache &&
+            window.spritesCache.get &&
+            window.spritesCache.get(this.sprite) instanceof Image
+          ) {
+            this.spriteReady = true;
+            this.spriteImage = window.spritesCache.get(this.sprite).cloneNode();
+            this.sprite = this.spriteImage.spriteSource = this.spriteImage.src;
+          }
+
           if (!this.spriteImage || (this.spriteImage && this.spriteImage.spriteSource !== this.sprite)) {
             this.spriteImage = new Image(this.width, this.height);
 
@@ -488,7 +618,7 @@
         }
       },
 
-      beforeDraw: function() {
+      beforeDraw: function () {
         this.context.save();
 
         this.context.globalAlpha = this.opacity;
@@ -501,7 +631,7 @@
         // use this function to draw the object
       },
 
-      afterDraw: function() {
+      afterDraw: function () {
         if (this.showOrigin) {
           this.drawOrigin();
         }
@@ -675,9 +805,17 @@
       this.anatomy = {
         beak: new CanvasObject(this.renderer, {
           sprite: 'bird-sprite.png',
-          spriteRect: { x: 100, y: 50, width: 40, height: 70 },
-          width: 40,
-          height: 70,
+          spriteRect: { x: 100, y: 50, width: 34, height: 58 },
+          width: 34,
+          height: 58,
+          zindex: 2,
+        }),
+
+        jaw: new CanvasObject(this.renderer, {
+          sprite: 'bird-sprite.png',
+          spriteRect: { x: 94, y: 108, width: 39, height: 30 },
+          width: 39,
+          height: 30,
           zindex: 1,
         }),
 
@@ -770,7 +908,6 @@
         height: 120,
         originX: 0.5,
         originY: 0.5,
-        dir: 1,
         vx: 0,
         vy: 0,
         strength: 20,
@@ -785,55 +922,50 @@
         var ox = this.x;
         var oy = this.y;
 
-        this.x += this.dir * this.vx;
+        this.x += this.vx;
         this.y += this.vy;
 
         this.vy += this.weight;
 
-        this.anatomy.beak.x = this.x + 40 * this.dir;
+        this.anatomy.beak.x = this.x + 48;
         this.anatomy.beak.y = this.y - 44;
-        this.anatomy.beak.scaleX = this.dir;
 
-        this.anatomy.tail_outer.x = this.x - 44 * this.dir;
+        this.anatomy.jaw.x = this.x + 40;
+        this.anatomy.jaw.y = this.y - 44 + 40;
+
+        this.anatomy.tail_outer.x = this.x - 44;
         this.anatomy.tail_outer.y = this.y + 14;
-        this.anatomy.tail_outer.scaleX = this.dir;
-        this.anatomy.tail_outer.rotation = 2 * (this.dir * (this.y - oy) + this.dir);
+        this.anatomy.tail_outer.rotation = 2 * (this.y - oy);
 
-        this.anatomy.tail_inner.x = this.x - 40 * this.dir;
+        this.anatomy.tail_inner.x = this.x - 40;
         this.anatomy.tail_inner.y = this.y + 22;
-        this.anatomy.tail_inner.scaleX = this.dir;
-        this.anatomy.tail_inner.rotation += (1.5 * this.dir * (this.y - oy) - this.anatomy.tail_inner.rotation) / 3;
+        this.anatomy.tail_inner.rotation += (1.5 * (this.y - oy) - this.anatomy.tail_inner.rotation) / 3;
 
-        this.anatomy.feet_inner.x = this.x + 0 * this.dir;
+        this.anatomy.feet_inner.x = this.x;
         this.anatomy.feet_inner.y = this.y + 55;
-        this.anatomy.feet_inner.scaleX = this.dir;
-        this.anatomy.feet_inner.rotation += (-2 * this.dir * (this.y - oy - 5) - this.anatomy.feet_inner.rotation) / 3;
+        this.anatomy.feet_inner.rotation += (-2 * (this.y - oy - 5) - this.anatomy.feet_inner.rotation) / 3;
 
         this.anatomy.body.x = this.x;
         this.anatomy.body.y = this.y;
-        this.anatomy.body.scaleX = this.dir;
 
-        this.anatomy.feet_outer.x = this.x + 0 * this.dir;
+        this.anatomy.feet_outer.x = this.x;
         this.anatomy.feet_outer.y = this.y + 60;
-        this.anatomy.feet_outer.scaleX = this.dir;
-        this.anatomy.feet_outer.rotation += (-1.5 * this.dir * (this.y - oy - 15) - this.anatomy.feet_outer.rotation) / 3;
+        this.anatomy.feet_outer.rotation += (-1.5 * (this.y - oy - 15) - this.anatomy.feet_outer.rotation) / 3;
 
-        this.anatomy.eye.x = this.x + 28 * this.dir;
+        this.anatomy.eye.x = this.x + 28;
         this.anatomy.eye.y = this.y - 30;
-        this.anatomy.eye.scaleX = this.dir;
 
-        this.anatomy.pupil.x = this.x + this.pupilDX + 38 * this.dir;
+        this.anatomy.pupil.x = this.x + this.pupilDX + 38;
         this.anatomy.pupil.y = this.y + this.pupilDY - 30;
 
-        this.anatomy.pupil.x = this.x + this.pupilDX + 30 * this.dir;
+        this.anatomy.pupil.x = this.x + this.pupilDX + 30;
         this.anatomy.pupil.y = this.y + this.pupilDY - 30;
 
         this.wingFlap = Math.max(0, this.wingFlap * 0.4);
 
-        this.anatomy.wing.x = this.x - 20 * this.dir;
+        this.anatomy.wing.x = this.x - 20;
         this.anatomy.wing.y = this.y + 10;
-        this.anatomy.wing.rotation = Math.min(25, Math.max(-25, 2 * this.dir * (this.y - oy))) - 15 * this.dir;
-        this.anatomy.wing.scaleX = this.dir;
+        this.anatomy.wing.rotation = Math.min(25, Math.max(-25, 2 * (this.y - oy))) - 15;
         this.anatomy.wing.scaleY += (Math.min(1.25, Math.max(-1.25, 0.25 * (4 + this.y - oy + this.wingFlap))) - this.anatomy.wing.scaleY) / 1.2;
         this.anatomy.wing.goto(this.anatomy.wing.scaleY > 0 ? 0 : 1);
 
@@ -846,35 +978,33 @@
       },
 
       blink: function () {
-        var eye = this.anatomy.eye;
-        eye.animate({
+        this.anatomy.eye.animate({
           scaleY: {
             to: 0,
             duration: 40,
             complete: function () {
-              eye.animate({
+              this.anatomy.eye.animate({
                 scaleY: {
                   to: 1,
                   duration: 80
                 }
-              })
-            }
+              });
+            }.bind(this)
           }
         });
 
-        var pupil = this.anatomy.pupil;
-        pupil.animate({
+        this.anatomy.pupil.animate({
           scaleY: {
             to: 0,
             duration: 80,
             complete: function () {
-              pupil.animate({
+              this.anatomy.pupil.animate({
                 scaleY: {
                   to: 1,
                   duration: 80
                 }
-              })
-            }
+              });
+            }.bind(this)
           }
         });
       },
@@ -893,6 +1023,52 @@
         });
       },
 
+      chirp: function() {
+        this.anatomy.beak.animate({
+          scaleY: {
+            to: 0.85,
+            duration: 100,
+            complete: function () {
+              this.anatomy.beak.animate({
+                scaleY: {
+                  to: 1,
+                  duration: 100
+                }
+              });
+            }.bind(this)
+          }
+        });
+
+        this.anatomy.jaw.animate({
+          scaleY: {
+            to: 0.85,
+            duration: 100,
+            complete: function () {
+              this.anatomy.jaw.animate({
+                scaleY: {
+                  to: 1,
+                  duration: 100
+                }
+              });
+            }.bind(this)
+          },
+          rotation: {
+            to: rand(3, 7),
+            duration: 100,
+            complete: function () {
+              this.anatomy.jaw.animate({
+                rotation: {
+                  to: 0,
+                  duration: 100
+                }
+              });
+            }.bind(this)
+          }
+        });
+
+        audioManager.play('chirp-' + irand(1, 10));
+      },
+
       destroy: function () {
         CanvasObject.prototype.destroy.call(this);
 
@@ -904,6 +1080,10 @@
     CanvasObject
   );
 
+  /* ============================================ */
+  /* SHOCKED BIRD
+  /* ============================================ */
+  
   var ShockedBird = createClass(
     function (renderer, options) {
       this.counter = 0;
@@ -930,6 +1110,7 @@
         if (this.counter <= 0) {
           this.counter = rand(5, 15);
           this.spriteRect.x = this.width * irand(2);
+          audioManager.play('chirp-' + irand(1, 10));
         } else {
           this.counter--;
         }
@@ -938,6 +1119,10 @@
     Animatable
   );
 
+  /* ============================================ */
+  /* DEAD BIRD
+  /* ============================================ */
+  
   var DeadBird = createClass(
     function (renderer, options) {
       this.anatomy = {
@@ -1006,11 +1191,6 @@
         }),
       };
 
-      this.timeout = setTimeout(function flap() {
-        this.vy = -8;
-        this.timeout = setTimeout(flap.bind(this), 1500);
-      }.bind(this), 700);
-
       this.anatomy.body.animate({
         scaleX: {
           to: 1,
@@ -1057,6 +1237,8 @@
           delay: 300
         }
       });
+
+      this.flap = 45;
     },
     {
       defaults: Object.assign({}, cloneObject(CanvasObject.prototype.defaults), {
@@ -1095,7 +1277,15 @@
         this.anatomy.wing_left.y = this.y - 20;
         this.anatomy.wing_left.rotation += (Math.min(30, 17 * (this.y - this.oy)) - this.anatomy.wing_left.rotation) / 5;
 
-        if (this.y < -this.height) {
+        if (this.flap <= 0) {
+          this.vy = -8;
+          this.flap = 90;
+          audioManager.play('flap', 0.5);
+        } else {
+          this.flap = (this.flap || 0) - 1;
+        }
+
+        if (this.y < -0.5 * this.height) {
           this.destroy();
         }
 
@@ -1114,6 +1304,10 @@
     },
     CanvasObject
   );
+
+  /* ============================================ */
+  /* DEAD FEATHER
+  /* ============================================ */
 
   var DeadFeather = createClass(
     function (renderer, options) {
@@ -1517,6 +1711,10 @@
 
         this.blinkCounter = -1;
         this.lookCounter = -1;
+        this.chirpCounter = -1;
+
+        // stop all sounds
+        audioManager.stopAll();
       },
 
       start: function () {
@@ -1572,15 +1770,24 @@
         if (!this.started && !this.ended) {
           if (this.bird.y > 0.55 * this.canvas.height) {
             this.bird.flap(16);
+            audioManager.play('flap', 0.25);
           }
         }
 
         // blink and look around
-        if (this.blinkCounter <= 0) {
+        if (this.blinkCounter <= 0 && !this.ended) {
           this.blinkCounter = irand(10, 300);
           this.bird.blink();
         } else {
           this.blinkCounter--;
+        }
+
+        // chirp
+        if (this.chirpCounter <= 0 && this.started && !this.ended) {
+          this.chirpCounter = irand(10, 300);
+          this.bird.chirp();
+        } else {
+          this.chirpCounter--;
         }
 
         if (this.started && this.score > 0) {
@@ -1699,6 +1906,9 @@
 
             pipe.wires.zap = true;
 
+            audioManager.stop('background');
+            audioManager.play('zap', 0.25);
+
             this.birdGhost = new ShockedBird(this.renderer, {
               x: this.bird.x,
               y: this.bird.y,
@@ -1712,6 +1922,8 @@
                 y: this.birdGhost.y,
                 zindex: 10,
               });
+
+              audioManager.play('explosion', 0.15);
 
               this.deadFeathers = [];
 
@@ -1735,11 +1947,17 @@
               });
             }.bind(this), 1000);
 
+            setTimeout(function () {
+              if (this.ended) {
+                audioManager.play('gameover', 0.6);
+              }
+            }.bind(this), 3400);
+
             navigator.vibrate && navigator.vibrate(1000);
 
             var killCount = +localStorage.getItem('fb_killCount') || 0;
             localStorage.setItem('fb_killCount', killCount + 1);
-            
+
             if (killCount + 1 >= 3) {
               killcount.innerHTML = killCount + 1;
             }
@@ -1870,7 +2088,7 @@
       },
 
       mousedown: function (e) {
-        this.useAction();
+        this.userAction();
       },
 
       keydown: function (e) {
@@ -1883,7 +2101,7 @@
           }
         } else {
           if (!this.keyDownTimeout) {
-            this.useAction();
+            this.userAction();
 
             this.keyDownTimeout = setTimeout(function () {
               delete this.keyDownTimeout;
@@ -1896,7 +2114,7 @@
         // keyup
       },
 
-      useAction: function () {
+      userAction: function () {
         if (this.ended) {
           if (this.canRestart) {
             this.canRestart = false;
@@ -1905,6 +2123,10 @@
         } else {
           if (!this.started) {
             this.start();
+
+            setTimeout(function () {
+              audioManager.play('background', 0.25, true);
+            }, 3000);
           }
 
           if (this.paused) {
@@ -1912,6 +2134,8 @@
           }
 
           this.bird.flap();
+
+          audioManager.play('flap', 0.4);
         }
       }
     }
@@ -1921,58 +2145,188 @@
   /* INITIALIZE
   /* ============================================ */
 
+  var canvas = document.getElementById('canvas');
+
+  // detect touch screen
   if (isTouch()) {
     document.body.classList.add('is-touch');
   }
 
-  function preloadImages(images, onComplete, onProgress) {
-    var loaded = 0;
+  // resize canvas on window resize
+  window.addEventListener('resize', (function resizeCanvas() {
+    var scaleFactor = 1 + (0.8 * 1100 / window.innerHeight);
 
-    preloadImage(images[loaded]);
+    canvas.width = scaleFactor * canvas.offsetWidth;
+    canvas.height = scaleFactor * canvas.offsetHeight;
 
-    function preloadImage(src) {
-      if (images.length === loaded) {
-        return onComplete && onComplete();
-      }
+    // debounce
+    var timeout;
+    return function () {
+      clearTimeout(timeout);
+      setTimeout(resizeCanvas, 300);
+    };
+  }()));
 
-      var img = new Image();
+  // load audio
+  var audioManager = new AudioManager();
+  var audioProgress = 0;
 
-      img.onload = function () {
-        loaded++;
-        onProgress && onProgress(loaded / images.length);
-        preloadImage(images[loaded]);
-      }
+  audioManager
+    .on('progress', function (e, v) {
+      audioProgress = 0.5 * v;
+      updateOverallProgress();
+    })
+    .on('finish', function (e) {
+      initialize();
+    })
+    .load([
+      {
+        name: 'flap',
+        url: 'sounds/flap.mp3',
+      },
+      {
+        name: 'zap',
+        url: 'sounds/zap.mp3',
+      },
+      {
+        name: 'explosion',
+        url: 'sounds/explosion.mp3',
+      },
+      {
+        name: 'chirp-1',
+        url: 'sounds/chirp-1.mp3',
+      },
+      {
+        name: 'chirp-2',
+        url: 'sounds/chirp-2.mp3',
+      },
+      {
+        name: 'chirp-3',
+        url: 'sounds/chirp-3.mp3',
+      },
+      {
+        name: 'chirp-4',
+        url: 'sounds/chirp-4.mp3',
+      },
+      {
+        name: 'chirp-5',
+        url: 'sounds/chirp-5.mp3',
+      },
+      {
+        name: 'chirp-6',
+        url: 'sounds/chirp-6.mp3',
+      },
+      {
+        name: 'chirp-7',
+        url: 'sounds/chirp-7.mp3',
+      },
+      {
+        name: 'chirp-8',
+        url: 'sounds/chirp-8.mp3',
+      },
+      {
+        name: 'chirp-9',
+        url: 'sounds/chirp-9.mp3',
+      },
+      {
+        name: 'chirp-10',
+        url: 'sounds/chirp-10.mp3',
+      },
+      {
+        name: 'gameover',
+        url: 'sounds/gameover.mp3',
+      },
+      {
+        name: 'background',
+        url: 'sounds/background.mp3',
+      },
+    ]);
 
-      img.src = src;
+  // setup sprites cache
+  window.spritesCache = {
+    cache: {},
 
-      img.style.visibility = 'hidden';
-      img.style.width = '1px';
-      img.style.height = '1px';
-      img.style.position = 'fixed';
+    set: function (name, value) {
+      window.spritesCache.cache[name] = value;
+    },
 
-      document.body.appendChild(img);
-    }
+    get: function (name) {
+      return window.spritesCache.cache[name];
+    },
+  };
+
+  // load sprites
+  var SpriteLoader = new SpriteLoader();
+  var spritesProgress = 0;
+
+  SpriteLoader
+    .on('progress', function (e, data) {
+      var img = data.image.cloneNode();
+      img.removeAttribute('style');
+
+      spritesProgress = 0.5 * data.progress;
+      window.spritesCache.set(data.name, img);
+      updateOverallProgress();
+    })
+    .on('finish', function (e) {
+      initialize();
+    })
+    .load([
+      {
+        name: 'bird-sprite.png',
+        url: 'sprites/bird-sprite.png',
+      },
+      {
+        name: 'bird-shocked.png',
+        url: 'sprites/bird-shocked.png',
+      },
+      {
+        name: 'bird-ghost.png',
+        url: 'sprites/bird-ghost.png',
+      },
+      {
+        name: 'pipes-top.png',
+        url: 'sprites/pipes-top.png',
+      },
+      {
+        name: 'pipes-bottom.png',
+        url: 'sprites/pipes-bottom.png',
+      },
+      {
+        name: 'wires-top.png',
+        url: 'sprites/wires-top.png',
+      },
+      {
+        name: 'wires-bottom.png',
+        url: 'sprites/wires-bottom.png',
+      },
+      {
+        name: 'clouds.png',
+        url: 'sprites/clouds.png'
+      },
+    ]);
+
+  // track overall progress
+  var overallProgress = 0;
+
+  function updateOverallProgress() {
+    overallProgress = audioProgress + spritesProgress;
+    preloader.innerHTML = Math.ceil(overallProgress * 100) + '%';
   }
 
-  preloadImages([
-    'bird-sprite.png',
-    'bird-shocked.png',
-    'bird-ghost.png',
-    'pipes-top.png',
-    'pipes-bottom.png',
-    'wires-top.png',
-    'wires-bottom.png',
-    'clouds.png'
-  ], function () {
-    document.body.classList.add('is-loaded');
+  // initialize
+  function initialize() {
+    if (overallProgress < 1) {
+      return;
+    }
 
-    var game = new Game(renderer);
+    var game = new Game(new Renderer(canvas));
 
     window.addEventListener('blur', function () {
       game.pause();
     });
-  }, function (v) {
-    preloader.innerHTML = Math.ceil(v * 100) + '%';
-  });
+
+    document.body.classList.add('is-loaded');
+  }
 
 }());

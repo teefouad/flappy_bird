@@ -1,0 +1,23 @@
+{
+  "name": "flappy_bird",
+  "version": "1.0.0",
+  "description": "",
+  "main": "scripts.js",
+  "scripts": {
+    "start": "browser-sync start -s",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/teefouad/flappy_bird.git"
+  },
+  "author": "Mostafa <tee.fouad@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/teefouad/flappy_bird/issues"
+  },
+  "homepage": "https://github.com/teefouad/flappy_bird#readme",
+  "dependencies": {
+    "browser-sync": "^2.18.13"
+  }
+}
